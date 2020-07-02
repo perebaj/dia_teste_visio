@@ -6,49 +6,54 @@ class Manipulate():
     """
     Manipula os dados de um video e executa a açao que esta no arquivo Json
     """
-    def __init__(self, video, _task, _timestamps):
+    def __init__(self, video, _task, _params):
         """Dados base para manipulação do video
 
         Args:
             video (String): nome ou caminho para o video
         """
-        self.nome_video = video
-        self.task = _task
-        self.timestamps = _timestamps
-        self.cap = cv2.VideoCapture(video)
+        self.params        = _params
+        self.nome_video    = video
+        print(self.nome_video)
+        self.task          = _task
+        self.cap           = cv2.VideoCapture(self.nome_video, cv2.CAP_FFMPEG)
         self.largura_video = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))  
         self.altura_video  = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) 
         self.dimensao      = (self.largura_video, self.altura_video)
         self.fourcc        = cv2.VideoWriter_fourcc(*"mp4v")
-        # self.fourcc = int(self.cap.get(cv2.CAP_PROP_FOURCC))
         self.frame_per_sec = self.cap.get(cv2.CAP_PROP_FPS)
-    def leitura_video(self):
-        # frame_count = 0
+        # self.fourcc        = int(self.cap.get(cv2.CAP_PROP_FOURCC))
 
-        while self.cap.isOpened():
-            ret, frame = self.cap.read()
+        # self.fourcc        = cv2.VideoWriter_fourcc(cap_fourcc)
+    
             
+    def execute_tasks(self):
+        if self.task == 'split':
+            timestamp = self.params['timestamp']
+            frame = self.time2frames(timestamp)
+            self.split_video(frame)
+        if self.task == 'slice':
+            timestamp = self.params['timestamps']
+            frames = []
+            for times in timestamp: frames.append(self.time2frames(times))
+            self.slice_video(frames[0], frames[1])
+        if self.task == 'append':
+            self.append_video(self.params['to_append'])
 
-    def corte_video(self):
-        pass
 
-    def time2frames(self, tempo_inicial, tempo_final):
+    def time2frames(self, time):
         """calcula o tempo e segundos do corte inicial e final que será feito no video
 
         Args:
             tempo_inicial ([String]): Tempo incial no qual será feito  o corte
             tempo_final ([String]): Tempo final no qual será feito o corte
         """
-        horas, minutos, segundos    = tempo_inicial.split(":")
-        horas1, minutos1, segundos1 = tempo_final.split(":")
+        horas, minutos, segundos    = time.split(":")
+        tempo_segundos = int(horas) *3600  + int(minutos) * 60 + int(segundos) 
+    
 
-        tempo_inicial_segundos = int(horas) *3600  + int(minutos) * 60 + int(segundos) 
-        tempo_final_segundos   = int(horas1)*3600  + int(minutos1)* 60 + int(segundos1)
-
-        frame_inicial  =  self.frame_per_sec * tempo_inicial_segundos
-        frame_final    =  self.frame_per_sec * tempo_final_segundos
-        return frame_inicial, frame_final
-
+        frame  =  self.frame_per_sec * tempo_segundos
+        return frame
     def split_video(self, frame_split):
         """Cortar video de acordo com o parâmetro de corte {frame_split} gerando dois videos 
 
@@ -60,6 +65,7 @@ class Manipulate():
         nome_video_saida2 = nome_sem_extensao + 'b' + '.mp4'
         out1              = cv2.VideoWriter(nome_video_saida1, self.fourcc, self.frame_per_sec, self.dimensao)
         out2              = cv2.VideoWriter(nome_video_saida2, self.fourcc, self.frame_per_sec, self.dimensao)
+        print('teste')
         frame_count        = 0
         while self.cap.isOpened():
             ret, frame = self.cap.read()
@@ -77,11 +83,10 @@ class Manipulate():
         out2.release()   
         cv2.destroyAllWindows()
 
-    def slice_video(self):
+    def slice_video(self, frame_inicial, frame_final):
         nome_sem_extensao = self.nome_video.split('.')[0]
         nome_video_saida  = nome_sem_extensao + 'c' + '.mp4'
         out               = cv2.VideoWriter(nome_video_saida, self.fourcc, self.frame_per_sec, self.dimensao)
-        frame_inicial, frame_final = self.time2frames(self.timestamps[0], self.timestamps[1])
         frame_count       = 0 
         while self.cap.isOpened():
             ret, frame = self.cap.read()
@@ -115,9 +120,13 @@ class Manipulate():
 
         self.cap.release()
         out.release()
-        # video2_append.release()
+        video2_append.release()
         cv2.destroyAllWindows()
 
-teste = Manipulate('1591803600_033a.mp4', 'slice', ['00:01:30', '00:01:50'])
-# teste.split_video(1000)
-teste.append_video('1591803600_033b.mp4')
+
+mensagem_teste = {'params': {'timestamp': '00:01:00'},
+                    'task': 'split',
+                    'video': '1591803600_033.mp4'}
+
+teste = Manipulate('1591803600_033.mp4', 'split', {'timestamp': '00:01:00'})
+teste.append_video('1591803600_033c.mp4')
