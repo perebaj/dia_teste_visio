@@ -13,9 +13,9 @@ class Manipulate():
         Args:
             video (String): nome ou caminho para o video
         """
-        self.timestamps = _timestamps
         self.nome_video = video
         self.task = _task
+        self.timestamps = _timestamps
         self.cap = cv2.VideoCapture(video)
         self.largura_video = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))  
         self.altura_video  = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) 
@@ -76,10 +76,10 @@ class Manipulate():
 
 
     def slice_video(self, frame_inicial, frame_final):
-        nome_sem_extensao          = self.nome_video.split('.')[0]
-        nome_video_saida           = nome_sem_extensao + 'c' + '.mp4'
-        out                        = cv2.VideoWriter(nome_video_saida, self.fourcc, self.frame_per_sec, self.dimensao)
-        frame_count                = 0 
+        nome_sem_extensao = self.nome_video.split('.')[0]
+        nome_video_saida  = nome_sem_extensao + 'c' + '.mp4'
+        out               = cv2.VideoWriter(nome_video_saida, self.fourcc, self.frame_per_sec, self.dimensao)
+        frame_count       = 0 
         while self.cap.isOpened():
             ret, frame = self.cap.read()
             if frame_count >= frame_inicial and frame_count < frame_final:
@@ -90,5 +90,23 @@ class Manipulate():
 
         self.cap.release()
         out.release()    
-    def append_video(self):
-        pass
+
+    def append_video(self, to_append):
+        video2_append = cv2.VideoCapture(to_append)
+        nome_sem_extensao = self.nome_video.split('.')[0]
+        nome_video_saida  = nome_sem_extensao + 'd' + '.mp4'
+        out               = cv2.VideoWriter(nome_video_saida, self.fourcc, self.frame_per_sec, self.dimensao)
+        num_frames_video  = self.cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        frame_cout        = 0 
+        while self.cap.isOpened():
+            ret, frame = self.cap.read()
+            if ret == True:
+                out.write(frame)
+            else:
+                while video2_append.isOpened():
+                    ret2, frame2 = video2_append.read()
+                    if ret2 == True:
+                        out.write(frame2)
+        self.cap.release()
+        out.release()
+        video2_append.release()
