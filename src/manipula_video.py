@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -
 import cv2
-from Utils import calcula_tempo_corte, read_jsonfile
 
 class Manipulate():
     """
@@ -20,9 +19,9 @@ class Manipulate():
         self.largura_video = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))  
         self.altura_video  = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) 
         self.dimensao      = (self.largura_video, self.altura_video)
-        self.fourcc        = cv2.VideoWriter_fourcc(*'XVID')
+        self.fourcc        = cv2.VideoWriter_fourcc(*"mp4v")
+        # self.fourcc = int(self.cap.get(cv2.CAP_PROP_FOURCC))
         self.frame_per_sec = self.cap.get(cv2.CAP_PROP_FPS)
-        
     def leitura_video(self):
         # frame_count = 0
 
@@ -57,28 +56,32 @@ class Manipulate():
             frame_split (Int): frame que sera cortado
         """
         nome_sem_extensao = self.nome_video.split('.')[0]
-        nome_video_saida1 = nome_sem_extensao + 'a' + 'mp4'
-        nome_video_saida2 = nome_sem_extensao + 'b' + 'mp4'
+        nome_video_saida1 = nome_sem_extensao + 'a' + '.mp4'
+        nome_video_saida2 = nome_sem_extensao + 'b' + '.mp4'
         out1              = cv2.VideoWriter(nome_video_saida1, self.fourcc, self.frame_per_sec, self.dimensao)
         out2              = cv2.VideoWriter(nome_video_saida2, self.fourcc, self.frame_per_sec, self.dimensao)
-        frame_cout        = 0
+        frame_count        = 0
         while self.cap.isOpened():
             ret, frame = self.cap.read()
-            if frame_cout < frame_split:
-                out1.write(frame)
+            if ret == True:
+                if frame_count < frame_split:
+                    out1.write(frame)
+                elif frame_count >= frame_split:
+                    out2.write(frame)
             else:
-                out2.write(frame)
-            frame_cout += 1
-
+                break
+            frame_count += 1
+            # print(frame_count)
         self.cap.release()
         out1.release()
         out2.release()   
+        cv2.destroyAllWindows()
 
-
-    def slice_video(self, frame_inicial, frame_final):
+    def slice_video(self):
         nome_sem_extensao = self.nome_video.split('.')[0]
         nome_video_saida  = nome_sem_extensao + 'c' + '.mp4'
         out               = cv2.VideoWriter(nome_video_saida, self.fourcc, self.frame_per_sec, self.dimensao)
+        frame_inicial, frame_final = self.time2frames(self.timestamps[0], self.timestamps[1])
         frame_count       = 0 
         while self.cap.isOpened():
             ret, frame = self.cap.read()
@@ -86,27 +89,35 @@ class Manipulate():
                 out.write(frame)
             elif frame_count == frame_final:
                 break
-            frame += 1
+            frame_count += 1
 
         self.cap.release()
         out.release()    
+        cv2.destroyAllWindows()
 
     def append_video(self, to_append):
-        video2_append = cv2.VideoCapture(to_append)
+        video2_append     = cv2.VideoCapture(to_append)
         nome_sem_extensao = self.nome_video.split('.')[0]
         nome_video_saida  = nome_sem_extensao + 'd' + '.mp4'
         out               = cv2.VideoWriter(nome_video_saida, self.fourcc, self.frame_per_sec, self.dimensao)
-        num_frames_video  = self.cap.get(cv2.CAP_PROP_FRAME_COUNT)
-        frame_cout        = 0 
+        frame_count        = 0 
         while self.cap.isOpened():
+            # print(self.cap.isOpened())
             ret, frame = self.cap.read()
             if ret == True:
                 out.write(frame)
             else:
-                while video2_append.isOpened():
-                    ret2, frame2 = video2_append.read()
-                    if ret2 == True:
-                        out.write(frame2)
+                ret2, frame2 = video2_append.read()
+                if ret2 == True:
+                    out.write(frame2)
+                else: break
+
+
         self.cap.release()
         out.release()
-        video2_append.release()
+        # video2_append.release()
+        cv2.destroyAllWindows()
+
+teste = Manipulate('1591803600_033a.mp4', 'slice', ['00:01:30', '00:01:50'])
+# teste.split_video(1000)
+teste.append_video('1591803600_033b.mp4')
