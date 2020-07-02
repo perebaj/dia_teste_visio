@@ -14,7 +14,7 @@ class Manipulate():
         """
         self.params        = _params
         self.nome_video    = video
-        print(self.nome_video)
+        # print(self.nome_video)
         self.task          = _task
         self.cap           = cv2.VideoCapture(self.nome_video, cv2.CAP_FFMPEG)
         self.largura_video = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))  
@@ -63,8 +63,8 @@ class Manipulate():
         nome_sem_extensao = self.nome_video.split('.')[0]
         nome_video_saida1 = nome_sem_extensao + 'a' + '.mp4'
         nome_video_saida2 = nome_sem_extensao + 'b' + '.mp4'
-        out1              = cv2.VideoWriter(nome_video_saida1, self.fourcc, self.frame_per_sec, self.dimensao)
-        out2              = cv2.VideoWriter(nome_video_saida2, self.fourcc, self.frame_per_sec, self.dimensao)
+        out1              = cv2.VideoWriter(nome_video_saida1, cv2.CAP_FFMPEG, self.fourcc, self.frame_per_sec, self.dimensao)
+        out2              = cv2.VideoWriter(nome_video_saida2, cv2.CAP_FFMPEG,self.fourcc, self.frame_per_sec, self.dimensao)
         print('teste')
         frame_count        = 0
         while self.cap.isOpened():
@@ -86,7 +86,7 @@ class Manipulate():
     def slice_video(self, frame_inicial, frame_final):
         nome_sem_extensao = self.nome_video.split('.')[0]
         nome_video_saida  = nome_sem_extensao + 'c' + '.mp4'
-        out               = cv2.VideoWriter(nome_video_saida, self.fourcc, self.frame_per_sec, self.dimensao)
+        out               = cv2.VideoWriter(nome_video_saida, cv2.CAP_FFMPEG, self.fourcc, self.frame_per_sec, self.dimensao)
         frame_count       = 0 
         while self.cap.isOpened():
             ret, frame = self.cap.read()
@@ -101,10 +101,10 @@ class Manipulate():
         cv2.destroyAllWindows()
 
     def append_video(self, to_append):
-        video2_append     = cv2.VideoCapture(to_append)
+        video2_append     = cv2.VideoCapture(to_append, cv2.CAP_FFMPEG)
         nome_sem_extensao = self.nome_video.split('.')[0]
         nome_video_saida  = nome_sem_extensao + 'd' + '.mp4'
-        out               = cv2.VideoWriter(nome_video_saida, self.fourcc, self.frame_per_sec, self.dimensao)
+        out               = cv2.VideoWriter(nome_video_saida, cv2.CAP_FFMPEG, self.fourcc, self.frame_per_sec, self.dimensao)
         frame_count        = 0 
         while self.cap.isOpened():
             # print(self.cap.isOpened())
@@ -124,9 +124,32 @@ class Manipulate():
         cv2.destroyAllWindows()
 
 
-mensagem_teste = {'params': {'timestamp': '00:01:00'},
-                    'task': 'split',
-                    'video': '1591803600_033.mp4'}
+mensagem_teste_append = {
+        "video": "1591821600_015.mp4",
+        "task": "append",
+        "params": {
+            "to_append": "1591822800_002.mp4"
+        }
+    }
 
-teste = Manipulate('1591803600_033.mp4', 'split', {'timestamp': '00:01:00'})
-teste.append_video('1591803600_033c.mp4')
+mensagem_teste_slice = {
+        "video": "1591821600_015.mp4",
+        "task": "slice",
+        "params": {
+            "timestamps": [
+                "00:00:20",
+                "00:00:50"
+            ]
+        }
+    }
+mensagem_teste_split ={
+        "video": "1591821600_015.mp4",
+        "task": "split",
+        "params": {
+            "timestamp": "00:0:20"
+        }
+    }
+
+teste = Manipulate(mensagem_teste_split['video'], mensagem_teste_split['task'], mensagem_teste_split['params'])
+# teste.append_video('1591803600_033a.mp4')
+teste.execute_tasks()
