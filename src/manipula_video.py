@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -
 import cv2
-
+import json
 class Manipulate():
     """
     Manipula os dados de um video e executa a açao que esta no arquivo Json
@@ -23,11 +23,12 @@ class Manipulate():
         self.fourcc        = cv2.VideoWriter_fourcc(*"mp4v")
         self.frame_per_sec = self.cap.get(cv2.CAP_PROP_FPS)
         # self.fourcc        = int(self.cap.get(cv2.CAP_PROP_FOURCC))
-
         # self.fourcc        = cv2.VideoWriter_fourcc(cap_fourcc)
     
             
-    def execute_tasks(self):
+    def execute_task(self):
+        """Dada a tarefa em mensagens.json executa-la
+        """
         if self.task == 'split':
             timestamp = self.params['timestamp']
             frame = self.time2frames(timestamp)
@@ -84,6 +85,12 @@ class Manipulate():
         cv2.destroyAllWindows()
 
     def slice_video(self, frame_inicial, frame_final):
+        """ Extração de um segmento do video 
+
+        Args:
+            frame_inicial (int): Frame inicial do video que será removido
+            frame_final (int): Frame final do video que será removido
+        """
         nome_sem_extensao = self.nome_video.split('.')[0]
         nome_video_saida  = nome_sem_extensao + 'c' + '.mp4'
         out               = cv2.VideoWriter(nome_video_saida, cv2.CAP_FFMPEG, self.fourcc, self.frame_per_sec, self.dimensao)
@@ -101,6 +108,11 @@ class Manipulate():
         cv2.destroyAllWindows()
 
     def append_video(self, to_append):
+        """Unir dois videos em apenas um video final
+
+        Args:
+            to_append (String): Video que sera appendado em {self.cap}
+        """
         video2_append     = cv2.VideoCapture(to_append, cv2.CAP_FFMPEG)
         nome_sem_extensao = self.nome_video.split('.')[0]
         nome_video_saida  = nome_sem_extensao + 'd' + '.mp4'
@@ -123,6 +135,7 @@ class Manipulate():
         video2_append.release()
         cv2.destroyAllWindows()
 
+   
 
 mensagem_teste_append = {
         "video": "1591821600_015.mp4",
@@ -150,6 +163,15 @@ mensagem_teste_split ={
         }
     }
 
-teste = Manipulate(mensagem_teste_split['video'], mensagem_teste_split['task'], mensagem_teste_split['params'])
-# teste.append_video('1591803600_033a.mp4')
-teste.execute_tasks()
+# teste = Manipulate(mensagem_teste_split['video'], mensagem_teste_split['task'], mensagem_teste_split['params'])
+# teste.execute_task()
+
+def read_jsonfile(path):
+       with open(path) as f:
+           mensagens_json = json.load(f)
+       return mensagens_json
+
+mensagens_json = read_jsonfile('mensagens.json')
+for mensagem in mensagens_json:
+    teste_auto = Manipulate(mensagem['video'], mensagem['task'], mensagem['params'])
+    teste_auto.execute_task()
